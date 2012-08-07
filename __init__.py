@@ -10,7 +10,6 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import urllib, urllib2
 import base64
 import json
@@ -54,6 +53,11 @@ class ParseBase(object):
         date = datetime.datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S.%f%Z")
         return date
 
+
+class ParseGeoPoint(object):
+    def __init__(self, latitude, longitude):
+        self.latitude = latitude
+        self.longitude = longitude
 
 class ParseObject(ParseBase):
     def __init__(self, class_name, attrs_dict=None):
@@ -116,6 +120,10 @@ class ParseObject(ParseBase):
         elif type(value) == ParseBinaryDataWrapper:
             value = {'__type': 'Bytes',
                     'base64': base64.b64encode(value)}
+        elif type(value) == ParseGeoPoint:
+            value = {'__type': 'GeoPoint',
+                    'latitude': float(value.latitude),
+                    'longitude': float(value.longitude)}
 
         return (key, value)
 
@@ -129,6 +137,8 @@ class ParseObject(ParseBase):
                 value = self._ISO8601ToDatetime(value['iso'])
             elif value['__type'] == 'Bytes':
                 value = ParseBinaryDataWrapper(base64.b64decode(value['base64']))
+            elif value['__type'] == 'GeoPoint':
+                value = ParseGeoPoint(value.get('latitude'), value.get('longitude'))
             else:
                 raise Exception('Invalid __type.')
 
